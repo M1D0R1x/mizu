@@ -26,6 +26,17 @@ function CharacterMesh() {
   const mixer     = useRef<THREE.AnimationMixer | null>(null);
   const actions   = useRef<Record<string, THREE.AnimationAction>>({});
 
+  // Traverse cloned scene once to enable shadows on all meshes
+  useEffect(() => {
+    if (!clonedScene.current) return;
+    clonedScene.current.traverse((child) => {
+      if ((child as THREE.Mesh).isMesh) {
+        child.castShadow = true;
+        child.receiveShadow = true;
+      }
+    });
+  }, []);
+
   // Set up mixer once on mount (animations array is stable after preload)
   useEffect(() => {
     if (!clonedScene.current) return;
@@ -53,20 +64,30 @@ function CharacterMesh() {
     // Advance mixer every frame
     mixer.current?.update(dt);
 
-    // Sync position & direction with player
+    // Sync position & direction with player (feet flush on terrain at p.pos.y)
     groupRef.current.position.set(p.pos.x, p.pos.y, p.pos.z);
     // +π because the Soldier model's forward faces +Z; player forward is -Z
     groupRef.current.rotation.y = p.yaw + Math.PI;
 
     // --- Animation blending ---
-    // Normalise speed against base WALK so speedMult doesn't break thresholds
-    const normSpeed = p.speed / (p.speedMult || 1);
+    const speed = p.speed;
     const targetName =
-      normSpeed > 3.0 ? "Run" :
-      normSpeed > 0.3 ? "Walk" :
-                        "Idle";
+      speed > 4.5 ? "Run" :
+      speed > 0.25 ? "Walk" :
+                     "Idle";
 
-    const FADE = 1 - Math.exp(-dt * 7);
+    // Adjust stride cadence to match travel speed so feet don't slide
+    if (actions.current["Walk"]) {
+      actions.current["Walk"].timeScale = Math.max(0.6, speed / 3.2);
+    }
+    if (actions.current["Run"]) {
+      actions.current["Run"].timeScale = Math.max(0.7, speed / 5.5);
+    }
+    if (actions.current["Idle"]) {
+      actions.current["Idle"].timeScale = 1.0;
+    }
+
+    const FADE = 1 - Math.exp(-dt * 9);
     for (const [name, action] of Object.entries(actions.current)) {
       if (name === "TPose") { action.setEffectiveWeight(0); continue; }
       const want = name === targetName ? 1 : 0;
@@ -78,12 +99,12 @@ function CharacterMesh() {
   return (
     <group ref={groupRef} visible={false}>
       {/*
-        Real measured height: 44.39 units.
-        Scale = 1.8m / 44.39 = 0.04055  →  character is exactly 5'11"
-        Model origin is at the waist (foot minY = -22.48 units).
-        Lift by |minY| × scale = 22.48 × 0.04055 ≈ 0.912m so feet sit on ground.
+        Soldier.glb native dimensions in Three.js:
+        Height: 1.832m (~6ft), Feet at y=0.
+        Scale 0.985 brings height to exactly 1.803m (5'11").
+        Position [0, 0, 0] ensures soles touch terrain directly.
       */}
-      <primitive object={clonedScene.current!} scale={0.04055} position={[0, 0.912, 0]} />
+      <primitive object={clonedScene.current!} scale={0.985} position={[0, 0, 0]} />
     </group>
   );
 }
