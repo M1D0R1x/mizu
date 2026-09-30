@@ -6,7 +6,7 @@ import { Overlay } from "./ui/Overlay";
 
 const GameCanvas = dynamic(() => import("./game/GameCanvas").then((m) => m.GameCanvas), {
   ssr: false,
-  loading: () => <div className="loading"><span>MIZU</span></div>,
+  loading: () => <div className="loading" suppressHydrationWarning><span suppressHydrationWarning>MIZU</span></div>,
 });
 
 export function Mizu() {
@@ -22,7 +22,7 @@ export function Mizu() {
     return () => window.removeEventListener("resize", check);
   }, []);
 
-  if (!ready) return <div className="loading"><span>MIZU</span></div>;
+  if (!ready) return <div className="loading" suppressHydrationWarning><span suppressHydrationWarning>MIZU</span></div>;
   if (smallScreen) {
     return (
       <div className="gate">
