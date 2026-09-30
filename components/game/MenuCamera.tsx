@@ -6,9 +6,10 @@ import { useGame } from "@/store/gameStore";
 import { world } from "@/lib/game/world";
 import { LAKE, terrainHeight } from "@/lib/world/terrain";
 import { smoothstep } from "@/lib/world/noise";
+import { getSpawnSpot } from "@/lib/world/spawnGen";
 
-export const PLAYER_START = new THREE.Vector3(-50, 0, 130);
-const START_YAW = 0.45; // facing roughly north-east across the lake
+export const PLAYER_START = getSpawnSpot().pos;
+const START_YAW = getSpawnSpot().yaw;
 
 const tmpPos = new THREE.Vector3(), tmpLook = new THREE.Vector3(), tmpQ = new THREE.Quaternion(), fromPos = new THREE.Vector3(), fromQ = new THREE.Quaternion();
 const eul = new THREE.Euler(0, 0, 0, "YXZ");
@@ -24,8 +25,11 @@ export function MenuCamera() {
     if (mode === "entering") {
       enterT.current = 0;
       const p = world.player;
-      p.pos.set(PLAYER_START.x, terrainHeight(PLAYER_START.x, PLAYER_START.z), PLAYER_START.z);
-      p.yaw = START_YAW; p.pitch = 0.02;
+      const spawn = getSpawnSpot();
+      p.pos.copy(spawn.pos);
+      p.yaw = spawn.yaw;
+      p.facingYaw = spawn.yaw;
+      p.pitch = 0.02;
     }
   }, [mode]);
 

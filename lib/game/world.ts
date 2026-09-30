@@ -5,6 +5,10 @@ import type { AreaId } from "@/lib/world/terrain";
 
 export type WeatherType = "clear" | "windy" | "lightRain" | "heavyRain" | "mist";
 
+import { getSpawnSpot } from "@/lib/world/spawnGen";
+
+const initialSpawn = getSpawnSpot();
+
 export const world = {
   time: 6.1, // hours, 0..24
   hoursPerMinute: 1.6, // day length ~15 real minutes
@@ -29,8 +33,8 @@ export const world = {
   lanternGlow: 0, // 0..1 lanterns / windows lit
 
   player: {
-    pos: new THREE.Vector3(-20, 5, 80),
-    yaw: 0,
+    pos: initialSpawn.pos.clone(),
+    yaw: initialSpawn.yaw,
     pitch: 0,
     speed: 0,
     onGround: true,
@@ -39,7 +43,7 @@ export const world = {
     tppMode: false,      // third-person camera active
     tppDist: 6.0,        // camera orbit distance (metres behind/above player)
     speedMult: 1.0,      // 0.5 = slow walk, 1 = normal, 2 = fast
-    facingYaw: 0,        // character body facing angle
+    facingYaw: initialSpawn.yaw, // character body facing angle
     moving: false,       // true when player is pressing WASD movement keys
   },
 

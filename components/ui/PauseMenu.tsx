@@ -16,7 +16,7 @@ export function PauseMenu() {
         <button className="menu-item" onClick={() => go("settings")}>Settings</button>
         <button className="menu-item" onClick={() => go("menu")}>Leave the valley</button>
       </nav>
-      <div className="corner bl">W A S D — walk · Shift — hurry · Space — step · E — touch · P — photograph</div>
+      <div className="corner bl">W A S D — walk · Shift — hurry · Space — step · V — third person · N — new seed · E — touch</div>
       <div className="corner br">Esc — return</div>
     </div>
   );

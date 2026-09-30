@@ -139,6 +139,11 @@ export function Player() {
         world.player.speedMult = SPEED_STEPS[next];
         flashSpeedLabel(SPEED_STEPS[next]);
       }
+      // N rolls a brand new random procedural valley
+      if (e.code === "KeyN") {
+        const next = Math.floor(Math.random() * 90000) + 1000;
+        window.location.search = `?seed=${next}`;
+      }
     };
     // Scroll wheel adjusts TPP distance in TPP mode, speed in FPP mode
     const onWheel = (e: WheelEvent) => {
