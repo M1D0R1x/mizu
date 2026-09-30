@@ -1,83 +1,96 @@
 "use client";
-import { useEffect, useRef } from "react";
+import { Suspense, useEffect, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import { useGLTF } from "@react-three/drei";
 import * as THREE from "three";
+import { clone as skeletonClone } from "three/examples/jsm/utils/SkeletonUtils.js";
 import { world } from "@/lib/game/world";
 import { useGame } from "@/store/gameStore";
 
-// Pre-load so it's ready before the player enters
 useGLTF.preload("/character.glb");
 
-const WALK_SPEED = 3.4;
-const RUN_SPEED  = 6.0;
-
-// Smoothly crossfades between three clips: Idle → Walk → Run
-// based on actual player speed each frame.
-export function Character() {
+// -------------------------------------------------------------------
+// Inner component — only mounts after GLB is loaded (Suspense gate)
+// -------------------------------------------------------------------
+function CharacterMesh() {
+  const { scene: rawScene, animations } = useGLTF("/character.glb");
   const mode = useGame((s) => s.mode);
-  const { scene, animations } = useGLTF("/character.glb");
 
-  const mixer  = useRef<THREE.AnimationMixer | null>(null);
-  const clips  = useRef<Record<string, THREE.AnimationAction>>({});
-  const active = useRef<string>("Idle");
-  const groupRef = useRef<THREE.Group>(null!);
+  // Clone the scene so AnimationMixer drives only this instance's bones
+  const clonedScene = useRef<THREE.Object3D | null>(null);
+  if (!clonedScene.current) {
+    clonedScene.current = skeletonClone(rawScene);
+  }
 
-  // Boot the mixer and cache all clips once
+  const groupRef  = useRef<THREE.Group>(null!);
+  const mixer     = useRef<THREE.AnimationMixer | null>(null);
+  const actions   = useRef<Record<string, THREE.AnimationAction>>({});
+
+  // Set up mixer once on mount (animations array is stable after preload)
   useEffect(() => {
-    const m = new THREE.AnimationMixer(scene);
+    if (!clonedScene.current) return;
+    const m = new THREE.AnimationMixer(clonedScene.current);
     mixer.current = m;
     for (const clip of animations) {
       const a = m.clipAction(clip);
       a.play();
-      a.setEffectiveWeight(0);
-      clips.current[clip.name] = a;
+      // Start on Idle, everything else at 0
+      a.setEffectiveWeight(clip.name === "Idle" ? 1 : 0);
+      actions.current[clip.name] = a;
     }
-    // start fully on Idle
-    if (clips.current["Idle"]) clips.current["Idle"].setEffectiveWeight(1);
-    return () => { m.stopAllAction(); };
-  }, [scene, animations]);
+    return () => { m.stopAllAction(); mixer.current = null; };
+  }, [animations]);
 
   useFrame((_, dt) => {
-    if (!mixer.current || mode !== "playing") return;
-    mixer.current.update(dt);
+    if (mode !== "playing" || !groupRef.current) return;
 
     const p = world.player;
 
-    // Only show character in TPP mode
-    if (groupRef.current) {
-      groupRef.current.visible = p.tppMode;
-    }
+    // Visibility — only show in TPP
+    groupRef.current.visible = p.tppMode;
     if (!p.tppMode) return;
 
-    // Position the character at the player's feet, facing their yaw
+    // Advance mixer every frame
+    mixer.current?.update(dt);
+
+    // Sync position & direction with player
     groupRef.current.position.set(p.pos.x, p.pos.y, p.pos.z);
-    groupRef.current.rotation.y = p.yaw + Math.PI; // model faces forward
+    // +π because the Soldier model's forward faces +Z; player forward is -Z
+    groupRef.current.rotation.y = p.yaw + Math.PI;
 
-    // Determine target animation from speed
-    const speed = p.speed;
-    let target = "Idle";
-    if (speed > WALK_SPEED * 0.85) target = "Run";
-    else if (speed > 0.4) target = "Walk";
+    // --- Animation blending ---
+    // Normalise speed against base WALK so speedMult doesn't break thresholds
+    const normSpeed = p.speed / (p.speedMult || 1);
+    const targetName =
+      normSpeed > 3.0 ? "Run" :
+      normSpeed > 0.3 ? "Walk" :
+                        "Idle";
 
-    // Smooth crossfade: ramp target to 1, others to 0
-    const FADE = 1 - Math.exp(-dt * 6);
-    for (const [name, action] of Object.entries(clips.current)) {
+    const FADE = 1 - Math.exp(-dt * 7);
+    for (const [name, action] of Object.entries(actions.current)) {
       if (name === "TPose") { action.setEffectiveWeight(0); continue; }
-      const want = name === target ? 1 : 0;
+      const want = name === targetName ? 1 : 0;
       const cur  = action.getEffectiveWeight();
       action.setEffectiveWeight(cur + (want - cur) * FADE);
     }
-    active.current = target;
   });
 
   return (
     <group ref={groupRef} visible={false}>
-      <primitive
-        object={scene}
-        scale={0.011}        // Soldier.glb is ~180 units tall → scale to ~2m
-        position={[0, 0, 0]}
-      />
+      {/* scale: Soldier is ~180 Three.js units tall → 180 × 0.011 ≈ 2 m */}
+      <primitive object={clonedScene.current!} scale={0.011} />
     </group>
+  );
+}
+
+// -------------------------------------------------------------------
+// Public export — Suspense keeps the rest of the canvas alive while
+// the GLB streams in; fallback=null means nothing shows until ready
+// -------------------------------------------------------------------
+export function Character() {
+  return (
+    <Suspense fallback={null}>
+      <CharacterMesh />
+    </Suspense>
   );
 }
