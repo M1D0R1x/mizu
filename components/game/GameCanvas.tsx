@@ -6,6 +6,7 @@ import { TimeSystem } from "./TimeSystem";
 import { LightingSystem } from "./LightingSystem";
 import { Sky } from "./Sky";
 import { Player } from "./Player";
+import { Character } from "./Character";
 import { MenuCamera } from "./MenuCamera";
 import { PostFX } from "./PostFX";
 import { World } from "./World";
@@ -39,6 +40,7 @@ export function GameCanvas() {
       <Sky />
       <World />
       <Player />
+      <Character />
       <MenuCamera />
       <PhotoCamera />
       <InteractionSystem />
