@@ -15,13 +15,6 @@ export const viewport: Viewport = { themeColor: "#0a0c12", width: "device-width"
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${serif.variable} ${sans.variable}`} suppressHydrationWarning>
-      <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `try{const o=new MutationObserver((m)=>{for(let i=0;i<m.length;i++){const r=m[i];if(r.type==='attributes'&&r.attributeName&&r.attributeName.indexOf('bis_')===0){r.target.removeAttribute(r.attributeName);}}});o.observe(document.documentElement,{attributes:true,subtree:true});}catch(e){}`,
-          }}
-        />
-      </head>
       <body suppressHydrationWarning>{children}</body>
     </html>
   );
