@@ -137,12 +137,12 @@ function CharacterMesh() {
       speed > 0.25 ? "Walk" :
                      "Idle";
 
-    // Adjust stride cadence to match travel speed so feet don't slide
+    // Adjust stride cadence to match travel speed for 2x character proportions
     if (actions.current["Walk"]) {
-      actions.current["Walk"].timeScale = Math.max(0.6, speed / 3.2);
+      actions.current["Walk"].timeScale = Math.max(0.5, speed / 4.6);
     }
     if (actions.current["Run"]) {
-      actions.current["Run"].timeScale = Math.max(0.7, speed / 5.5);
+      actions.current["Run"].timeScale = Math.max(0.6, speed / 7.0);
     }
     if (actions.current["Idle"]) {
       actions.current["Idle"].timeScale = 1.0;
@@ -159,13 +159,8 @@ function CharacterMesh() {
 
   return (
     <group ref={groupRef} visible={false}>
-      {/*
-        Soldier.glb native dimensions in Three.js:
-        Height: 1.832m (~6ft), Feet at y=0.
-        Scale 0.985 brings height to exactly 1.803m (5'11").
-        Position [0, 0, 0] ensures soles touch terrain directly.
-      */}
-      <primitive object={clonedScene.current!} scale={0.985} position={[0, 0, 0]} />
+      {/* 2x scale: height ~3.6m, feet resting flush on ground surface */}
+      <primitive object={clonedScene.current!} scale={1.97} position={[0, 0, 0]} />
     </group>
   );
 }

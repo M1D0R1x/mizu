@@ -145,7 +145,7 @@ export function Player() {
       if (document.pointerLockElement !== gl.domElement) return;
       const p = world.player;
       if (p.tppMode) {
-        p.tppDist = clamp(p.tppDist + e.deltaY * 0.008, 2.0, 12.0);
+        p.tppDist = clamp(p.tppDist + e.deltaY * 0.008, 3.0, 16.0);
       } else {
         const cur = p.speedMult;
         const idx = SPEED_STEPS.reduce((b, s, i) => Math.abs(s - cur) < Math.abs(SPEED_STEPS[b] - cur) ? i : b, 0);
@@ -240,23 +240,23 @@ export function Player() {
     // ── Camera ────────────────────────────────────────────────────────────
     if (!world.cinematic) {
       if (p.tppMode) {
-        // Third-person: position camera behind+above player, look at head
+        // Third-person: position camera behind+above player, look at chest/head
         const dist = p.tppDist;
         const pitchClamped = clamp(p.pitch, -0.6, 0.55);
-        // orbit point: back along yaw, up along pitch
+        // orbit point: back along yaw, up along pitch (scaled for 2x character)
         const camX = p.pos.x + Math.sin(p.yaw) * dist * Math.cos(pitchClamped);
-        const camY = p.pos.y + EYE + Math.sin(pitchClamped) * dist + 0.3;
+        const camY = p.pos.y + 2.4 + Math.sin(pitchClamped) * dist + 0.5;
         const camZ = p.pos.z + Math.cos(p.yaw) * dist * Math.cos(pitchClamped);
         // keep camera above terrain
         const camGround = terrainHeight(camX, camZ);
-        _tppPos.set(camX, Math.max(camY, camGround + 0.4), camZ);
+        _tppPos.set(camX, Math.max(camY, camGround + 0.5), camZ);
         // smooth follow (snap on first frame after toggle)
         const alpha = tppCamInitialized.current ? 1 - Math.exp(-dt * 10) : 1;
         tppCamPos.current.lerp(_tppPos, alpha);
         tppCamInitialized.current = true;
         camera.position.copy(tppCamPos.current);
-        // look at player head
-        _tppTarget.set(p.pos.x, p.pos.y + EYE * 0.85, p.pos.z);
+        // look at 2x character upper body
+        _tppTarget.set(p.pos.x, p.pos.y + 2.2, p.pos.z);
         camera.lookAt(_tppTarget);
       } else {
         // First-person
