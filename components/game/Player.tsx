@@ -194,7 +194,8 @@ export function Player() {
       const h = terrainHeight(x, z);
       if (h < WATER_LEVEL - 0.55) return false;
       const n = terrainNormal(x, z);
-      if (n[1] < 0.45 && h > terrainHeight(p.pos.x, p.pos.z)) return false;
+      // Allow moving over steep obstacles if airborne above them
+      if (n[1] < 0.45 && h > p.pos.y) return false;
       return true;
     };
     if (tryMove(nx, nz)) { p.pos.x = nx; p.pos.z = nz; }
@@ -204,13 +205,22 @@ export function Player() {
     resolveColliders(c);
     p.pos.x = c.x; p.pos.z = c.z;
 
-    // vertical: ground follow + jump
+    // vertical: ground follow + responsive 1.1m jump
     const ground = terrainHeight(p.pos.x, p.pos.z);
-    if (keys.has("Space") && p.onGround && !p.sitting) { vy.current = 3.2; p.onGround = false; }
+    if (keys.has("Space") && p.onGround && !p.sitting) {
+      vy.current = 5.6;
+      p.onGround = false;
+      audio.footstep(ground < WATER_LEVEL + 0.35 ? "wet" : "grass");
+    }
     if (!p.onGround) {
-      vy.current -= 11 * dt;
+      vy.current -= 14 * dt;
       p.pos.y += vy.current * dt;
-      if (p.pos.y <= ground) { p.pos.y = ground; p.onGround = true; vy.current = 0; }
+      if (p.pos.y <= ground) {
+        p.pos.y = ground;
+        p.onGround = true;
+        vy.current = 0;
+        audio.footstep(ground < WATER_LEVEL + 0.35 ? "wet" : "grass");
+      }
     } else {
       p.pos.y = lerp(p.pos.y, ground, 1 - Math.exp(-dt * 14));
     }

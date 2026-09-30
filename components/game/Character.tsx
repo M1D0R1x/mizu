@@ -6,6 +6,7 @@ import * as THREE from "three";
 import { clone as skeletonClone } from "three/examples/jsm/utils/SkeletonUtils.js";
 import { world } from "@/lib/game/world";
 import { useGame } from "@/store/gameStore";
+import { clamp } from "@/lib/world/noise";
 
 useGLTF.preload("/character.glb");
 
@@ -22,17 +23,52 @@ function CharacterMesh() {
     clonedScene.current = skeletonClone(rawScene);
   }
 
-  const groupRef  = useRef<THREE.Group>(null!);
-  const mixer     = useRef<THREE.AnimationMixer | null>(null);
-  const actions   = useRef<Record<string, THREE.AnimationAction>>({});
+  const groupRef    = useRef<THREE.Group>(null!);
+  const mixer       = useRef<THREE.AnimationMixer | null>(null);
+  const actions     = useRef<Record<string, THREE.AnimationAction>>({});
+  const currentYaw  = useRef<number>(0);
+  const currentRoll = useRef<number>(0);
+  const initialized = useRef<boolean>(false);
 
-  // Traverse cloned scene once to enable shadows on all meshes
+  // Traverse cloned scene once to enable shadows and enhance texture vibrancy
   useEffect(() => {
     if (!clonedScene.current) return;
     clonedScene.current.traverse((child) => {
       if ((child as THREE.Mesh).isMesh) {
         child.castShadow = true;
         child.receiveShadow = true;
+
+        const mat = (child as THREE.Mesh).material as THREE.MeshStandardMaterial;
+        if (mat) {
+          const m = mat.clone();
+
+          // 1. Boost texture brightness & contrast so patterns, seams & straps pop
+          m.color.setRGB(1.28, 1.28, 1.28);
+
+          // 2. Balanced roughness so surfaces catch soft sunlight & sky reflections
+          m.roughness = 0.46;
+          m.metalness = 0.16;
+
+          // 3. Crisp normal mapping for cloth folds and armor plates
+          if (m.normalMap) {
+            m.normalScale.set(1.25, 1.25);
+          }
+
+          // 4. Subtle ambient emissive fill so shadows don't swallow texture details
+          m.emissive.set(0x242d3a);
+          m.emissiveIntensity = 0.24;
+
+          // 5. Visor: sleek reflective sci-fi cyan glow
+          if (child.name.includes("visor") || m.name.includes("Visor")) {
+            m.color.set(0x38bdf8);
+            m.emissive.set(0x0ea5e9);
+            m.emissiveIntensity = 0.85;
+            m.roughness = 0.1;
+            m.metalness = 0.8;
+          }
+
+          (child as THREE.Mesh).material = m;
+        }
       }
     });
   }, []);
@@ -64,14 +100,39 @@ function CharacterMesh() {
     // Advance mixer every frame
     mixer.current?.update(dt);
 
-    // Sync position & direction with player (feet flush on terrain at p.pos.y)
+    // Initialise yaw to current camera yaw on first frame
+    if (!initialized.current) {
+      currentYaw.current = p.yaw;
+      initialized.current = true;
+    }
+
+    // --- Smooth 360-degree turning towards camera direction ---
+    // The model naturally faces -Z (camera forward), so target is p.yaw directly (no +Math.PI)
+    const targetYaw = p.yaw;
+
+    // Shortest-arc angular difference across [-PI, PI] (handles full 360° wraps seamlessly)
+    let diff = targetYaw - currentYaw.current;
+    diff = Math.atan2(Math.sin(diff), Math.cos(diff));
+
+    // Smooth exponential turn damping
+    const speed = p.speed;
+    const turnSpeed = speed > 0.5 ? 20 : 13;
+    currentYaw.current += diff * (1 - Math.exp(-dt * turnSpeed));
+
+    // Dynamic banking / lean into turns while running
+    const turnRate = diff / Math.max(dt, 0.001);
+    const targetRoll = clamp(-turnRate * 0.022 * Math.min(speed / 3.4, 1.5), -0.12, 0.12);
+    currentRoll.current = THREE.MathUtils.lerp(currentRoll.current, targetRoll, 1 - Math.exp(-dt * 10));
+
+    // Sync position & rotation (feet flush on terrain at p.pos.y)
     groupRef.current.position.set(p.pos.x, p.pos.y, p.pos.z);
-    // +π because the Soldier model's forward faces +Z; player forward is -Z
-    groupRef.current.rotation.y = p.yaw + Math.PI;
+    groupRef.current.rotation.y = currentYaw.current;
+    groupRef.current.rotation.z = currentRoll.current;
 
     // --- Animation blending ---
-    const speed = p.speed;
+    const inAir = !p.onGround;
     const targetName =
+      inAir ? (speed > 1.0 ? "Run" : "Walk") :
       speed > 4.5 ? "Run" :
       speed > 0.25 ? "Walk" :
                      "Idle";
