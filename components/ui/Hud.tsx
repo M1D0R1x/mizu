@@ -34,7 +34,7 @@ export function Hud() {
         <div className="corner tr" style={{ opacity: 0.55 }}>TPP &nbsp;·&nbsp; scroll = zoom &nbsp;·&nbsp; V = FPP</div>
       )}
       {mode === "playing" && !tpp && locked && (
-        <div className="corner tr" style={{ opacity: 0.35 }}>V = third person &nbsp;·&nbsp; scroll = speed</div>
+        <div className="corner tr" style={{ opacity: 0.35 }}>V = third person &nbsp;·&nbsp; Tab = speed</div>
       )}
     </>
   );

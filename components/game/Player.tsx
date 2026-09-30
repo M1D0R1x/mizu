@@ -106,13 +106,24 @@ export function Player() {
     if (mode !== "playing" && document.pointerLockElement === gl.domElement) document.exitPointerLock();
   }, [mode, gl]);
 
-  // ── Keyboard shortcuts: V = toggle TPP, [ / ] = speed ───────────────────
+  // ── Keyboard shortcuts: V = toggle TPP, Tab = cycle speed, [ / ] = step ─
   useEffect(() => {
     if (mode !== "playing") return;
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.code === "KeyV") {
         world.player.tppMode = !world.player.tppMode;
-        tppCamInitialized.current = false; // snap on first frame
+        tppCamInitialized.current = false;
+      }
+      // Tab / Shift+Tab cycles through speed presets (wraps around)
+      if (e.code === "Tab") {
+        e.preventDefault();
+        const cur = world.player.speedMult;
+        const idx = SPEED_STEPS.reduce((b, s, i) => Math.abs(s - cur) < Math.abs(SPEED_STEPS[b] - cur) ? i : b, 0);
+        const next = e.shiftKey
+          ? (idx - 1 + SPEED_STEPS.length) % SPEED_STEPS.length
+          : (idx + 1) % SPEED_STEPS.length;
+        world.player.speedMult = SPEED_STEPS[next];
+        flashSpeedLabel(SPEED_STEPS[next]);
       }
       if (e.code === "BracketLeft") {
         const cur = world.player.speedMult;
