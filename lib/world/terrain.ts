@@ -2,7 +2,16 @@
 // Every system (terrain mesh, player grounding, vegetation placement,
 // water, buildings) samples these functions so the world is always consistent.
 
-import { clamp, fbm, gauss, lerp, smoothstep } from "./noise";
+import { clamp, fbm, gauss, lerp, mulberry32, smoothstep } from "./noise";
+import { subSeed } from "./seed";
+
+// Procedural seed parameters for valley generation
+const _terrainRng = mulberry32(subSeed("terrain"));
+const seedOffsetX = (_terrainRng() - 0.5) * 1600;
+const seedOffsetZ = (_terrainRng() - 0.5) * 1600;
+const mountainSeedX = (_terrainRng() - 0.5) * 1600;
+const mountainSeedZ = (_terrainRng() - 0.5) * 1600;
+const lakeSeed = (_terrainRng() - 0.5) * 800;
 
 export const WORLD_SIZE = 800; // terrain mesh spans -400..400
 export const WATER_LEVEL = 0;
@@ -77,7 +86,7 @@ export function streamDist(x: number, z: number) {
 // ---------- lake ----------
 export function lakeDist(x: number, z: number) {
   const d = Math.hypot(x - LAKE.x, z - LAKE.z);
-  return d + 16 * fbm(x * 0.011 + 3.1, z * 0.011 - 1.7, 3);
+  return d + 16 * fbm(x * 0.011 + 3.1 + lakeSeed, z * 0.011 - 1.7 + lakeSeed, 3);
 }
 
 // ---------- terraces ----------
@@ -117,12 +126,12 @@ export function pathDist(x: number, z: number) {
 
 // ---------- height ----------
 function terrainNoStream(x: number, z: number) {
-  let h = 3 + 5 * fbm(x * 0.008, z * 0.008, 4) + 1.1 * fbm(x * 0.045, z * 0.045, 2);
+  let h = 3 + 5 * fbm(x * 0.008 + seedOffsetX, z * 0.008 + seedOffsetZ, 4) + 1.1 * fbm(x * 0.045 + seedOffsetX * 0.3, z * 0.045 + seedOffsetZ * 0.3, 2);
 
   // encircling mountains
   const r = Math.hypot(x, z);
   const ring = smoothstep(265, 440, r);
-  h += ring * ring * (120 + 70 * fbm(x * 0.006 + 9, z * 0.006, 3)) + ring * 24 * fbm(x * 0.02, z * 0.02, 3);
+  h += ring * ring * (120 + 70 * fbm(x * 0.006 + 9 + mountainSeedX, z * 0.006 + mountainSeedZ, 3)) + ring * 24 * fbm(x * 0.02 + mountainSeedX, z * 0.02 + mountainSeedZ, 3);
 
   // northern shrine mountain
   h += 92 * gauss(Math.hypot(x, z + 362), 92) * (1 + 0.25 * fbm(x * 0.015, z * 0.015, 3));

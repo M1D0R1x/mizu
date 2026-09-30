@@ -1,6 +1,7 @@
 "use client";
 import { useGame, type Quality } from "@/store/gameStore";
 import { audio } from "@/lib/game/audio";
+import { WORLD_SEED } from "@/lib/world/seed";
 
 const QUALITIES: Quality[] = ["low", "medium", "high", "ultra"];
 
@@ -43,8 +44,18 @@ export function Settings() {
           <span />
         </div>
         <div className="row">
-          <span>Fullscreen</span>
-          <button className="toggle" onClick={() => { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen?.(); }}>toggle</button>
+          <span>World seed</span>
+          <button
+            className="toggle"
+            style={{ justifySelf: "start", padding: "6px 12px", textTransform: "none", letterSpacing: "0.15em", color: "var(--ink)" }}
+            onClick={() => {
+              const next = Math.floor(Math.random() * 90000) + 1000;
+              window.location.search = `?seed=${next}`;
+            }}
+            title="Click to generate a new procedural valley seed"
+          >
+            #{WORLD_SEED} &nbsp;·&nbsp; New Seed
+          </button>
           <span />
         </div>
         <div className="back"><button className="menu-item" onClick={back}>Back</button></div>

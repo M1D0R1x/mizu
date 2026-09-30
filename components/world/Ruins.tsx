@@ -6,19 +6,26 @@ import { mats } from "@/lib/game/materials";
 import { mulberry32, range } from "@/lib/world/noise";
 import { terrainHeight } from "@/lib/world/terrain";
 
+import { subSeed } from "@/lib/world/seed";
+
 interface OutpostSpec {
   x: number; z: number;
   seed: number;
   variant: "watermill" | "wall" | "hut" | "shrine_ruin" | "guardhouse";
 }
 
-const OUTPOSTS: OutpostSpec[] = [
-  { x: -80,  z: -210, seed: 501, variant: "wall" },
-  { x:  60,  z: -220, seed: 502, variant: "shrine_ruin" },
-  { x: 200,  z:  180, seed: 503, variant: "hut" },
-  { x: -180, z:  210, seed: 504, variant: "guardhouse" },
-  { x:  10,  z:  300, seed: 505, variant: "watermill" },
-];
+function getOutposts(): OutpostSpec[] {
+  const rSeed = subSeed("ruins");
+  const rng = mulberry32(rSeed);
+  const wobble = (amt = 16) => (rng() - 0.5) * amt;
+  return [
+    { x: -80 + wobble(),  z: -210 + wobble(), seed: rSeed + 1, variant: "wall" },
+    { x:  60 + wobble(),  z: -220 + wobble(), seed: rSeed + 2, variant: "shrine_ruin" },
+    { x: 200 + wobble(),  z:  180 + wobble(), seed: rSeed + 3, variant: "hut" },
+    { x: -180 + wobble(), z:  210 + wobble(), seed: rSeed + 4, variant: "guardhouse" },
+    { x:  10 + wobble(),  z:  300 + wobble(), seed: rSeed + 5, variant: "watermill" },
+  ];
+}
 
 function buildOutpost(spec: OutpostSpec, g: THREE.Group) {
   const m = mats();
@@ -123,7 +130,8 @@ function buildOutpost(spec: OutpostSpec, g: THREE.Group) {
 export function Ruins() {
   const group = useMemo(() => {
     const g = new THREE.Group();
-    for (const spec of OUTPOSTS) buildOutpost(spec, g);
+    const outposts = getOutposts();
+    for (const spec of outposts) buildOutpost(spec, g);
     return mergeStatic(g);
   }, []);
   return <primitive object={group} />;

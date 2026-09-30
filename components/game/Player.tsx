@@ -183,9 +183,18 @@ export function Player() {
       if (keys.has("KeyA") || keys.has("ArrowLeft"))  _input.sub(_right);
     }
     const shiftHeld = keys.has("ShiftLeft") || keys.has("ShiftRight");
+    const hasInput = _input.lengthSq() > 0.001;
+    p.moving = hasInput;
+    if (hasInput) {
+      // Movement direction in world space (relative to camera)
+      p.facingYaw = Math.atan2(-_input.x, -_input.z);
+    } else if (!p.tppMode) {
+      p.facingYaw = p.yaw;
+    }
+
     const baseSpeed = shiftHeld ? RUN : WALK;
-    const targetSpeed = _input.lengthSq() > 0 ? baseSpeed * p.speedMult : 0;
-    if (_input.lengthSq() > 0) _input.normalize().multiplyScalar(targetSpeed);
+    const targetSpeed = hasInput ? baseSpeed * p.speedMult : 0;
+    if (hasInput) _input.normalize().multiplyScalar(targetSpeed);
     vel.current.lerp(_input, 1 - Math.exp(-dt * (targetSpeed > 0 ? 8 : 11)));
 
     // horizontal move with terrain / water / collider constraints

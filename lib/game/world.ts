@@ -39,6 +39,8 @@ export const world = {
     tppMode: false,      // third-person camera active
     tppDist: 6.0,        // camera orbit distance (metres behind/above player)
     speedMult: 1.0,      // 0.5 = slow walk, 1 = normal, 2 = fast
+    facingYaw: 0,        // character body facing angle
+    moving: false,       // true when player is pressing WASD movement keys
   },
 
   // one-shot event timestamps (seconds since start) for audio/visual reactions

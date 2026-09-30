@@ -6,6 +6,7 @@ import { disc, notBamboo, rect, ring, scatter, standardAccept, type Placed } fro
 import { LOOKOUT, MAPLE_GROVE, SAKURA, SHRINE, VILLAGE, LAKE, lakeDist, terrainHeight, slopeAt, streamDist, WATER_LEVEL } from "@/lib/world/terrain";
 import { mats, withWind } from "@/lib/game/materials";
 import { mulberry32 } from "@/lib/world/noise";
+import { subSeed } from "@/lib/world/seed";
 import { useGame, QUALITY } from "@/store/gameStore";
 import { tex } from "@/lib/game/textures";
 
@@ -54,31 +55,32 @@ export function Trees() {
     const coniferMat = withWind(new THREE.MeshStandardMaterial({ color: 0xffffff, vertexColors: true, roughness: 0.92, alphaMap: coniferAlpha, alphaTest: 0.16, side: THREE.DoubleSide, flatShading: true }), { heightScale: 0, base: 0.22, amount: 0.55 });
 
     // ---- placements ----
+    const vSeed = subSeed("veg");
     const accept = (x: number, z: number, h: number) => standardAccept(x, z, h) && notBamboo(x, z);
     const sakura: Placed[] = [
-      ...scatter(11, 190, disc(SAKURA.x, SAKURA.z, 66, 0.8), accept, { minDist: 4.2, scale: [0.8, 1.25] }),
-      ...scatter(12, 34, disc(LOOKOUT.x, LOOKOUT.z, 30, 0.9), accept, { minDist: 4.5, scale: [0.9, 1.3] }),
-      ...scatter(13, 40, ring(LAKE.x, LAKE.z, 96, 122, Math.PI * 1.05, Math.PI * 1.95), accept, { minDist: 5, scale: [0.85, 1.2] }),
-      ...scatter(14, 22, ring(VILLAGE.x, VILLAGE.z, VILLAGE.radius - 2, VILLAGE.radius + 22), accept, { minDist: 6 }),
-      ...scatter(15, 18, ring(LAKE.x, LAKE.z, 98, 130, Math.PI * 0.05, Math.PI * 0.6), accept, { minDist: 6 }),
+      ...scatter(vSeed + 11, 190, disc(SAKURA.x, SAKURA.z, 66, 0.8), accept, { minDist: 4.2, scale: [0.8, 1.25] }),
+      ...scatter(vSeed + 12, 34, disc(LOOKOUT.x, LOOKOUT.z, 30, 0.9), accept, { minDist: 4.5, scale: [0.9, 1.3] }),
+      ...scatter(vSeed + 13, 40, ring(LAKE.x, LAKE.z, 96, 122, Math.PI * 1.05, Math.PI * 1.95), accept, { minDist: 5, scale: [0.85, 1.2] }),
+      ...scatter(vSeed + 14, 22, ring(VILLAGE.x, VILLAGE.z, VILLAGE.radius - 2, VILLAGE.radius + 22), accept, { minDist: 6 }),
+      ...scatter(vSeed + 15, 18, ring(LAKE.x, LAKE.z, 98, 130, Math.PI * 0.05, Math.PI * 0.6), accept, { minDist: 6 }),
     ];
-    const maple = scatter(21, 48, disc(MAPLE_GROVE.x, MAPLE_GROVE.z, MAPLE_GROVE.radius, 0.85), accept, { minDist: 4, scale: [0.8, 1.2] });
+    const maple = scatter(vSeed + 21, 48, disc(MAPLE_GROVE.x, MAPLE_GROVE.z, MAPLE_GROVE.radius, 0.85), accept, { minDist: 4, scale: [0.8, 1.2] });
     const broadleaf = [
-      ...scatter(31, 40, ring(LAKE.x, LAKE.z, 100, 150), accept, { minDist: 8, scale: [0.8, 1.3] }),
-      ...scatter(32, 40, rect(-40, 170, 110, 330), (x, z, h) => accept(x, z, h) && streamDist(x, z) > 6, { minDist: 8, scale: [0.8, 1.3] }),
-      ...scatter(33, 16, ring(VILLAGE.x, VILLAGE.z, VILLAGE.radius + 10, VILLAGE.radius + 40), accept, { minDist: 8 }),
+      ...scatter(vSeed + 31, 40, ring(LAKE.x, LAKE.z, 100, 150), accept, { minDist: 8, scale: [0.8, 1.3] }),
+      ...scatter(vSeed + 32, 40, rect(-40, 170, 110, 330), (x, z, h) => accept(x, z, h) && streamDist(x, z) > 6, { minDist: 8, scale: [0.8, 1.3] }),
+      ...scatter(vSeed + 33, 16, ring(VILLAGE.x, VILLAGE.z, VILLAGE.radius + 10, VILLAGE.radius + 40), accept, { minDist: 8 }),
     ];
     const pineAccept = (x: number, z: number, h: number) => accept(x, z, h) && h < 105;
     const pines = [
-      ...scatter(41, 460, ring(0, 0, 215, 345), pineAccept, { minDist: 5.5, scale: [0.75, 1.35] }),
-      ...scatter(42, 110, disc(-80, 260, 75), pineAccept, { minDist: 6, scale: [0.8, 1.3] }),
-      ...scatter(43, 90, disc(125, 245, 65), pineAccept, { minDist: 6, scale: [0.8, 1.3] }),
-      ...scatter(44, 70, disc(-110, -220, 70), pineAccept, { minDist: 6, scale: [0.8, 1.3] }),
-      ...scatter(45, 70, disc(120, -200, 70), pineAccept, { minDist: 6, scale: [0.8, 1.3] }),
+      ...scatter(vSeed + 41, 460, ring(0, 0, 215, 345), pineAccept, { minDist: 5.5, scale: [0.75, 1.35] }),
+      ...scatter(vSeed + 42, 110, disc(-80, 260, 75), pineAccept, { minDist: 6, scale: [0.8, 1.3] }),
+      ...scatter(vSeed + 43, 90, disc(125, 245, 65), pineAccept, { minDist: 6, scale: [0.8, 1.3] }),
+      ...scatter(vSeed + 44, 70, disc(-110, -220, 70), pineAccept, { minDist: 6, scale: [0.8, 1.3] }),
+      ...scatter(vSeed + 45, 70, disc(120, -200, 70), pineAccept, { minDist: 6, scale: [0.8, 1.3] }),
     ];
     const cedars = [
-      ...scatter(51, 46, ring(SHRINE.x, SHRINE.z, SHRINE.platformRadius + 8, 60), (x, z, h) => standardAccept(x, z, h, 0.6) && Math.abs(x) > 9, { minDist: 7, scale: [0.9, 1.4] }),
-      ...scatter(52, 30, rect(-40, -262, 40, -212), (x, z, h) => standardAccept(x, z, h, 0.6) && Math.abs(x) > 10, { minDist: 6, scale: [0.9, 1.3] }),
+      ...scatter(vSeed + 51, 46, ring(SHRINE.x, SHRINE.z, SHRINE.platformRadius + 8, 60), (x, z, h) => standardAccept(x, z, h, 0.6) && Math.abs(x) > 9, { minDist: 7, scale: [0.9, 1.4] }),
+      ...scatter(vSeed + 52, 30, rect(-40, -262, 40, -212), (x, z, h) => standardAccept(x, z, h, 0.6) && Math.abs(x) > 10, { minDist: 6, scale: [0.9, 1.3] }),
     ];
 
     // ---- geometry variants ----
@@ -118,12 +120,13 @@ export function Rocks() {
     const g = new THREE.Group();
     const m = mats();
     const acceptRock = (x: number, z: number, h: number) => h > WATER_LEVEL - 0.5 && h < 140 && slopeAt(x, z) < 0.7 && Math.hypot(x - VILLAGE.x, z - VILLAGE.z) > VILLAGE.radius;
+    const rSeed = subSeed("rocks");
     const items = [
-      ...scatter(61, 90, ring(LAKE.x, LAKE.z, 84, 112), (x, z, h) => acceptRock(x, z, h) && lakeDist(x, z) > 84, { minDist: 4, scale: [0.4, 1.4], sink: 0.35 }),
-      ...scatter(62, 120, ring(0, 0, 200, 340), acceptRock, { minDist: 5, scale: [0.6, 2.4], sink: 0.5 }),
-      ...scatter(63, 70, rect(0, 100, 70, 360), (x, z, h) => acceptRock(x, z, h) && streamDist(x, z) < 7 && streamDist(x, z) > 1.5, { minDist: 2, scale: [0.3, 0.9], sink: 0.25 }),
-      ...scatter(64, 50, disc(SAKURA.x, SAKURA.z, 70), acceptRock, { minDist: 6, scale: [0.4, 1.1], sink: 0.3 }),
-      ...scatter(65, 30, disc(SHRINE.x, SHRINE.z + 30, 50), (x, z, h) => acceptRock(x, z, h) && Math.abs(x) > 13, { minDist: 5, scale: [0.5, 1.6], sink: 0.4 }),
+      ...scatter(rSeed + 61, 90, ring(LAKE.x, LAKE.z, 84, 112), (x, z, h) => acceptRock(x, z, h) && lakeDist(x, z) > 84, { minDist: 4, scale: [0.4, 1.4], sink: 0.35 }),
+      ...scatter(rSeed + 62, 120, ring(0, 0, 200, 340), acceptRock, { minDist: 5, scale: [0.6, 2.4], sink: 0.5 }),
+      ...scatter(rSeed + 63, 70, rect(0, 100, 70, 360), (x, z, h) => acceptRock(x, z, h) && streamDist(x, z) < 7 && streamDist(x, z) > 1.5, { minDist: 2, scale: [0.3, 0.9], sink: 0.25 }),
+      ...scatter(rSeed + 64, 50, disc(SAKURA.x, SAKURA.z, 70), acceptRock, { minDist: 6, scale: [0.4, 1.1], sink: 0.3 }),
+      ...scatter(rSeed + 65, 30, disc(SHRINE.x, SHRINE.z + 30, 50), (x, z, h) => acceptRock(x, z, h) && Math.abs(x) > 13, { minDist: 5, scale: [0.5, 1.6], sink: 0.4 }),
     ];
     for (let v = 0; v < 3; v++) {
       const sub = items.filter((p) => p.variant === v);

@@ -100,23 +100,24 @@ function CharacterMesh() {
     // Advance mixer every frame
     mixer.current?.update(dt);
 
-    // Initialise yaw to current camera yaw on first frame
+    // Initialise yaw to current facing yaw on first frame
     if (!initialized.current) {
-      currentYaw.current = p.yaw;
+      currentYaw.current = p.facingYaw || p.yaw;
       initialized.current = true;
     }
 
-    // --- Smooth 360-degree turning towards camera direction ---
-    // The model naturally faces -Z (camera forward), so target is p.yaw directly (no +Math.PI)
-    const targetYaw = p.yaw;
+    // Target facing yaw:
+    // When moving, character turns to travel direction (for 'W', that is camera forward).
+    // When idle in TPP, character stays facing his last direction so camera can orbit to look at his face.
+    const targetYaw = p.facingYaw;
 
     // Shortest-arc angular difference across [-PI, PI] (handles full 360° wraps seamlessly)
     let diff = targetYaw - currentYaw.current;
     diff = Math.atan2(Math.sin(diff), Math.cos(diff));
 
-    // Smooth exponential turn damping
+    // Smooth exponential turn damping (snappy response when starting movement)
     const speed = p.speed;
-    const turnSpeed = speed > 0.5 ? 20 : 13;
+    const turnSpeed = p.moving ? 22 : 12;
     currentYaw.current += diff * (1 - Math.exp(-dt * turnSpeed));
 
     // Dynamic banking / lean into turns while running
