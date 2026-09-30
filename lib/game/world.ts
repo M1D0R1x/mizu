@@ -36,6 +36,9 @@ export const world = {
     onGround: true,
     area: null as AreaId | null,
     sitting: false,
+    tppMode: false,      // third-person camera active
+    tppDist: 4.5,        // camera orbit distance (metres behind/above player)
+    speedMult: 1.0,      // 0.5 = slow walk, 1 = normal, 2 = fast
   },
 
   // one-shot event timestamps (seconds since start) for audio/visual reactions
