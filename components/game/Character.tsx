@@ -77,8 +77,13 @@ function CharacterMesh() {
 
   return (
     <group ref={groupRef} visible={false}>
-      {/* scale: Soldier is ~180 Three.js units tall → 180 × 0.011 ≈ 2 m */}
-      <primitive object={clonedScene.current!} scale={0.011} />
+      {/*
+        Real measured height: 44.39 units.
+        Scale = 1.8m / 44.39 = 0.04055  →  character is exactly 5'11"
+        Model origin is at the waist (foot minY = -22.48 units).
+        Lift by |minY| × scale = 22.48 × 0.04055 ≈ 0.912m so feet sit on ground.
+      */}
+      <primitive object={clonedScene.current!} scale={0.04055} position={[0, 0.912, 0]} />
     </group>
   );
 }
